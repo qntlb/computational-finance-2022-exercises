@@ -64,13 +64,20 @@ public class Bootstrap {
 	 * bond. Internally, it also adds the new bond to the bond list and updates the
 	 * sum
 	 *
-	 * @param parSwapRate, the par swap rate for the given period
+	 * @param valueNewCouponBond the new coupon bond given by the user (for example, the
+	 * 		  first time the method is called this is 
+	 * 		  (T_2-T_1)*C_1*P(T_2;0)+(T_3-T_2)*C_2*P(T_3;0) + P(T_3;0)
+	 * @param valueNewCoupon the new coupon given by the user (for example, the
+	 * 		  first time the method is called this is C_2)
 	 */
 	public void nextBondFromCouponBond(double valueNewCouponBond, double valueNewCoupon) {
 		/*
 		 * We write 
 		 * CB_m= \sum_{i=1}^{m-2}C_i(T_{i+1}-T_i)P(T_{i+1};0)+C_{m-1}(T_m-T_{m-1})P(T_m;0)+P(T_m;0),
 		 * where the first element is equal to sumOfProductTimeStepBondsAndCoupons
+		 * so:
+		 * CB_m - \sum_{i=1}^{m-2}C_i(T_{i+1}-T_i)P(T_{i+1};0)= C_{m-1}(T_m-T_{m-1})P(T_m;0)+P(T_m;0)
+		 * P(T_m;0) = (CB_m - \sum_{i=1}^{m-2}C_i(T_{i+1}-T_i)P(T_{i+1};0))/(1+C_{m-1}(T_m-T_{m-1}))
 		 */
 		Double valueNewBond = (valueNewCouponBond - sumOfProductTimeStepBondsAndCoupons)
 				/ (1 + yearFraction * valueNewCoupon);
@@ -92,9 +99,9 @@ public class Bootstrap {
 		final DecimalFormat printNumberWithFourDecimalDigits = new DecimalFormat("0.0000");
 
 		// these are the vales of the coupon bonds we will give, one by one
-		final double[] couponBonds = { 1.93, 2.77, 3.55, 4.45, 5.2, 5.9, 6.55, 7.15 };
+		final double[] couponBonds = {1.93, 2.77, 3.55, 4.45, 5.2, 5.9, 6.55, 7.15};
 		// these are the vales of the coupons we will give, one by one
-		final double[] coupons = { 2.1, 1.9, 1.8, 2.2, 2.1, 1.95, 2, 2.05 };
+		final double[] coupons = {2.1, 1.9, 1.8, 2.2, 2.1, 1.95, 2, 2.05};
 		final double yearFraction = 0.5;// the constant T_{i+1}-T_i
 
 		final Bootstrap bootstrap = new Bootstrap(yearFraction, coupons[0], couponBonds[0]);

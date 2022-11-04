@@ -47,7 +47,7 @@ public class BondsAndLibors {
 	 * @return the array of doubles representing the Libor curve. The first element
 	 *         of the array is L(0,T_1;0).
 	 */
-	public double[] fromBondToLibors(double[] bonds) {
+	public double[] fromBondsToLibors(double[] bonds) {
 		//In the following, we use Definition 142 of the script (page 60)
 		
 		// We need it to be able to construct the array containing the values of the libors
@@ -88,11 +88,13 @@ public class BondsAndLibors {
 		double timeStep = tenureStructure.getTime(0);
 		// P(T_1;0) = P(0;0)/(1+L(0,T_1;0)*T_1) (since T_0 = 0)
 		derivedBondsCurve[0] = firstBond / (1 + lastLibor * timeStep);
+		double lastComputedBond;
 		for (int periodIndex = 1; periodIndex < curveLength; periodIndex++) {
 			timeStep = tenureStructure.getTimeStep(periodIndex - 1);
 			lastLibor = libors[periodIndex];// L(T_{i-1},T_i;0)
+			lastComputedBond = derivedBondsCurve[periodIndex - 1];
 			// P(T_i;0) = P(T_{i-1};0)/(1+L(T_{i-1},T_i;0)*(T_i-T_{i-1}))
-			derivedBondsCurve[periodIndex] = derivedBondsCurve[periodIndex - 1] / (1 + lastLibor * timeStep);
+			derivedBondsCurve[periodIndex] = lastComputedBond / (1 + lastLibor * timeStep);
 
 		}
 		return derivedBondsCurve;
@@ -107,13 +109,23 @@ public class BondsAndLibors {
 		final double[] bonds = { 0.98, 0.975, 0.97, 0.965, 0.959, 0.954, 0.95, 0.945 };
 
 		// time discretization parameters
-		final double initialTime = 0.5;
-		final int numberOfTimeSteps = 7;
-		final double timeStep = 0.5;
-		final TimeDiscretization times = new TimeDiscretizationFromArray(initialTime, numberOfTimeSteps, timeStep);
+		double initialTime = 0.5;
+		int numberOfTimeSteps = 7;
+		double timeStep = 0.5;
+		TimeDiscretization times = new TimeDiscretizationFromArray(initialTime, numberOfTimeSteps, timeStep);
 
 		BondsAndLibors converter = new BondsAndLibors(times);
-		final double[] libors = converter.fromBondToLibors(bonds);
+		final double[] libors = converter.fromBondsToLibors(bonds);
+		
+		// time discretization parameters
+		initialTime = 0.5;
+		numberOfTimeSteps = 7;
+		timeStep = 0.7;
+				
+		final TimeDiscretization newTimes = new TimeDiscretizationFromArray(initialTime, numberOfTimeSteps, timeStep);
+
+		converter.tenureStructure = newTimes;
+		
 		final double[] newBonds = converter.fromLiborsToBonds(libors);
 		// note how to print an array of doubles
 		System.out.println("The new bonds are " + Arrays.toString(newBonds));
