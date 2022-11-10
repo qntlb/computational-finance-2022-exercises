@@ -10,7 +10,7 @@ package com.andreamazzon.handout3;
 public interface Swap {
 
 	/**
-	 * It computes and returns the value of a swap at evaluation time t = 0, for a
+	 * It computes and returns the value of a swap at evaluation time t = 0 for a
 	 * given vector of swap rates and a general tenure structure, given in the
 	 * constructor of the class implementing the interface
 	 *
