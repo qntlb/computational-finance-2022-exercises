@@ -21,8 +21,8 @@ public class InterestRatesProductsEnhanced extends InterestRatesProducts {
 	 * under the Black model for the two Libors involved, using a Monte Carlo
 	 * method.
 	 *
-	 * @param initialFirstLibor,                i.e. L^1_0 = L(T_1,T_2;0)
-	 * @param initialSecondLibor,                i.e. L^2_0 = L(T_2,T_3;0)
+	 * @param initialFirstLibor,                  i.e. L^1_0 = L(T_1,T_2;0)
+	 * @param initialSecondLibor,                 i.e. L^2_0 = L(T_2,T_3;0)
 	 * @param firstLiborVolatility,               the volatility of the first LIBOR
 	 *                                            process under the Black model
 	 * @param secondLiborVolatility               the volatility of the second LIBOR
@@ -67,6 +67,7 @@ public class InterestRatesProductsEnhanced extends InterestRatesProducts {
 		 */
 		final BrownianMotion twoDimBrownianMotion = new BrownianMotionFromMersenneRandomNumbers(times, 2,
 				numberOfSimulations, 1897);// (B^1,B^2), independent
+		//W^1=B^1, W^2 = \rho B^1 + \sqrt(1-\rho^2) B^2 
 
 		/*
 		 * This is the correlation matrix we want to have for the dependent Brownian
@@ -88,8 +89,8 @@ public class InterestRatesProductsEnhanced extends InterestRatesProducts {
 				new MonteCarloMultiAssetBlackScholesModel(twoDimBrownianMotion, initialLibors, 0,
 						volatilities, correlationMatrix);
 
-		final double firstPeriodLength = secondFixingDate - firstFixingDate;
-		final double secondPeriodLength = secondPaymentDate - secondFixingDate;
+		final double firstPeriodLength = secondFixingDate - firstFixingDate;//T_2-T_1
+		final double secondPeriodLength = secondPaymentDate - secondFixingDate;//T_3-T_2
 
 		// the constants we give to SumOfCallOptions
 		final double firstMultiplier = firstPaymentDateDiscountFactor * firstPeriodLength;
