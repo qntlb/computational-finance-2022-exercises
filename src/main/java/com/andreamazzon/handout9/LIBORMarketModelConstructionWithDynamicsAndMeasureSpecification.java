@@ -65,7 +65,7 @@ public class LIBORMarketModelConstructionWithDynamicsAndMeasureSpecification {
 	 */
 	private static double[][] createVolatilityStructure(double a, double b, double c, double d,
 			TimeDiscretization simulationTimeDiscretization, TimeDiscretization tenureStructureDiscretization) {
-		// volatility[i,j]=sigma_j(t_i)		//final double scalingFactor = (dynamicsType==Dynamics.LOGNORMAL) ? 1.0: 0.05;
+		// volatility[i,j]=sigma_j(t_i)		
 		final int numberOfSimulationTimes = simulationTimeDiscretization.getNumberOfTimeSteps();
 		final int numberOfTenureStructureTimes = tenureStructureDiscretization.getNumberOfTimeSteps();
 		final double[][] volatility = new double[numberOfSimulationTimes][numberOfTenureStructureTimes];
@@ -201,6 +201,7 @@ public class LIBORMarketModelConstructionWithDynamicsAndMeasureSpecification {
 		 * Step 6 Combine volatility model and correlation model, together with the two
 		 * time discretizations, to get a covariance model
 		 */
+		
 		final AbstractLIBORCovarianceModelParametric covarianceModel = new LIBORCovarianceModelFromVolatilityAndCorrelation(
 				timeDiscretization, LIBORPeriodDiscretization, volatilityModel, correlationModel);
 
@@ -230,8 +231,8 @@ public class LIBORMarketModelConstructionWithDynamicsAndMeasureSpecification {
 		properties.put("measure", nameOfTheMeasure);
 
 		
-		final String nameOfTheStateSpaceTransform = (dynamicsType == Dynamics.LOGNORMAL) ? "lognormal" : "normal";
-
+		//final String nameOfTheStateSpaceTransform = (dynamicsType == Dynamics.LOGNORMAL) ? "lognormal" : "normal";
+		final String nameOfTheStateSpaceTransform = "normal";
 		// Choose the state space transform
 		properties.put("stateSpace", nameOfTheStateSpaceTransform);
 

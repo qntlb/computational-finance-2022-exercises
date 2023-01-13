@@ -36,7 +36,7 @@ import net.finmath.time.TimeDiscretizationFromArray;
  * @author Andrea Mazzon
  *
  */
-public class WrongLIBORMarketModelConstructionWithDynamicsAndMeasureSpecification {
+public class LIBORMarketModelConstructionWithDynamicsAndMeasureSpecificationViaDirectVolatilityScaling {
 
 	public enum Measure {
 		SPOT, TERMINAL
@@ -64,15 +64,19 @@ public class WrongLIBORMarketModelConstructionWithDynamicsAndMeasureSpecificatio
 	 *         volatility[i,j]=sigma_j(t_i)
 	 */
 	private static double[][] createVolatilityStructure(double a, double b, double c, double d,
-			TimeDiscretization simulationTimeDiscretization, TimeDiscretization tenureStructureDiscretization)
+			TimeDiscretization simulationTimeDiscretization, TimeDiscretization tenureStructureDiscretization,
+			Dynamics dynamicsType, ForwardCurve forwardCurve)
 	{
 		// volatility[i,j]=sigma_j(t_i)
 		final int numberOfSimulationTimes = simulationTimeDiscretization.getNumberOfTimeSteps();
 		final int numberOfTenureStructureTimes = tenureStructureDiscretization.getNumberOfTimeSteps();
 		final double[][] volatility = new double[numberOfSimulationTimes][numberOfTenureStructureTimes];
 		
+		
 		for (int LIBORIndex = 0; LIBORIndex < numberOfTenureStructureTimes; LIBORIndex++) {
 			final double currentMaturity = tenureStructureDiscretization.getTime(LIBORIndex);// T_i
+			
+			double scalingParameter = (dynamicsType == Dynamics.LOGNORMAL) ? 1.0 : forwardCurve.getForward(null, currentMaturity) /*L_i(0)*/;
 			for (int timeIndex = 0; timeIndex < numberOfSimulationTimes; timeIndex++) {
 				final double currentTime = simulationTimeDiscretization.getTime(timeIndex);// t_j
 				final double timeToMaturity = currentMaturity - currentTime;
@@ -82,6 +86,8 @@ public class WrongLIBORMarketModelConstructionWithDynamicsAndMeasureSpecificatio
 				} else {
 					instVolatility = d + (a + b * timeToMaturity) * Math.exp(-c * timeToMaturity);// \sigma_i(t)=(a+b(T_i-t))\exp(-c(T_i-t))+d
 				}
+				
+				instVolatility *= scalingParameter;
 				// Store
 				volatility[timeIndex][LIBORIndex] = instVolatility;
 			}
@@ -183,7 +189,9 @@ public class WrongLIBORMarketModelConstructionWithDynamicsAndMeasureSpecificatio
 		final DiscountCurve discountCurve = new DiscountCurveFromForwardCurve(forwardCurve);
 
 		// Step 4, the volatility model: we only have to provide the matrix
-		final double[][] volatility = createVolatilityStructure(a, b, c, d, timeDiscretization, LIBORPeriodDiscretization);
+		final double[][] volatility = createVolatilityStructure(a, b, c, d, timeDiscretization, LIBORPeriodDiscretization, 
+				dynamicsType,
+				forwardCurve);
 
 		final LIBORVolatilityModel volatilityModel = new LIBORVolatilityModelFromGivenMatrix(timeDiscretization,
 				LIBORPeriodDiscretization, volatility);
@@ -203,7 +211,7 @@ public class WrongLIBORMarketModelConstructionWithDynamicsAndMeasureSpecificatio
 
 
 		
-		// Step 8: we now create the model (i.e., the object of type LiborMarketModel)
+		// Step 7: we now create the model (i.e., the object of type LiborMarketModel)
 
 		// Choose the simulation measure
 		final String nameOfTheMeasure = (measureType == Measure.TERMINAL) ? "terminal" : "spot";
@@ -232,7 +240,7 @@ public class WrongLIBORMarketModelConstructionWithDynamicsAndMeasureSpecificatio
 		final ProcessModel LIBORMarketModel = new LIBORMarketModelFromCovarianceModel(LIBORPeriodDiscretization,
 				forwardCurve, discountCurve, covarianceModel, swaptions, properties);
 
-		// Step 9: create an Euler scheme of the LIBOR model defined above
+		// Step 8: create an Euler scheme of the LIBOR model defined above
 		final BrownianMotion brownianMotion = new BrownianMotionFromMersenneRandomNumbers(timeDiscretization,
 				LIBORPeriodDiscretization.getNumberOfTimes() - 1, // no factor reduction for now
 				numberOfPaths, 1897 // seed
@@ -240,7 +248,7 @@ public class WrongLIBORMarketModelConstructionWithDynamicsAndMeasureSpecificatio
 
 		final MonteCarloProcess process = new EulerSchemeFromProcessModel(LIBORMarketModel, brownianMotion);
 
-		// Step 10: give the Euler scheme to the constructor of LIBORMonteCarloSimulationFromLIBORModel
+		// Step 9: give the Euler scheme to the constructor of LIBORMonteCarloSimulationFromLIBORModel
 		return new LIBORMonteCarloSimulationFromLIBORModel(process);
 	}
 }
