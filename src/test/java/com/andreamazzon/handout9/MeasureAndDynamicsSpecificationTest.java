@@ -3,8 +3,8 @@ package com.andreamazzon.handout9;
 import java.util.function.DoubleUnaryOperator;
 
 
-import com.andreamazzon.handout9.LIBORMarketModelConstructionWithDynamicsAndMeasureSpecification.Dynamics;
-import com.andreamazzon.handout9.LIBORMarketModelConstructionWithDynamicsAndMeasureSpecification.Measure;
+import com.andreamazzon.handout9.WrongLIBORMarketModelConstructionWithDynamicsAndMeasureSpecification.Dynamics;
+import com.andreamazzon.handout9.WrongLIBORMarketModelConstructionWithDynamicsAndMeasureSpecification.Measure;
 
 import net.finmath.exception.CalculationException;
 import net.finmath.montecarlo.interestrate.TermStructureMonteCarloSimulationModel;
@@ -65,7 +65,7 @@ public class MeasureAndDynamicsSpecificationTest {
 		for (final Dynamics typeOfDynamics : Dynamics.values()) {
 
 			final TermStructureMonteCarloSimulationModel liborMarketModelSimulation =
-					LIBORMarketModelConstructionWithDynamicsAndMeasureSpecification.createLIBORMarketModel(
+					WrongLIBORMarketModelConstructionWithDynamicsAndMeasureSpecification.createLIBORMarketModel(
 							numberOfPaths,
 							simulationTimeStep,
 							LIBORTimeStep, //T_i-T_{i-1}, we suppose it to be fixed
