@@ -1,6 +1,7 @@
 package com.andreamazzon.handout10;
 
 import java.text.DecimalFormat;
+import java.util.ArrayList;
 
 import com.andreamazzon.handout9.LIBORMarketModelConstructionWithDynamicsAndMeasureSpecificationViaDirectVolatilityScaling;
 import com.andreamazzon.handout9.LIBORMarketModelConstructionWithDynamicsAndMeasureSpecificationViaDirectVolatilityScaling.Dynamics;
@@ -27,26 +28,28 @@ import net.finmath.montecarlo.process.MonteCarloProcess;
  * @author Andrea Mazzon
  *
  */
-public class CalibrationTest {
+public class CalibrationEnhancedTest {
 
 	static final DecimalFormat formatterRealWithTwoDecimalDigits = new DecimalFormat("0.00");
 	static final DecimalFormat formatterRealWithFourDecimalDigits = new DecimalFormat(" 0.0000;-0.0000");
 	static final DecimalFormat formatterRealPercentage = new DecimalFormat(" 0.00%;");
 	
+	
 	public static void main(String[] args) throws CalculationException {
 
 		System.out.println("Calibration to Swaptions:");
 		System.out.println();
-		final int numberOfPaths = 10000;// the number of simulated processes
+		final int numberOfPaths = 50000;// the number of simulated processes
 
 		final double simulationTimeStep = 0.1;//for the SIMULATION discretization
 		final double liborPeriodLength = 0.5;//for the TENURE STRUCTURE discretization
 		final double liborRateTimeHorizon = 5;
+		
 		/*
-		 * These are the parameters of the LLIBOR Market model that we use to calibrate:
+		 * These are the parameters of the LIBOR Market model that we use to calibrate:
 		 * will we get something similar after the calibration?
 		 */
-		final double correlationDecayParam = 0.3;//alpha such that rho_{i,j}=\exp(-alpha|T_i-T_j|)
+		final double correlationDecayParameter = 0.3;//alpha such that rho_{i,j}=\exp(-alpha|T_i-T_j|)
 		final double a = 0.5, b = 0.7, c = 0.35, d = 0.1; // volatility structure
 		/*
 		 * The fixing (or maturity) dates for which the initial values of the forwards/Libors are given.
@@ -67,15 +70,17 @@ public class CalibrationTest {
 				simulationTimeStep,
 				liborPeriodLength, liborRateTimeHorizon,
 				fixingForForwards, forwardsForCurve,
-				correlationDecayParam /* Correlation */,
-				Dynamics.NORMAL,
+				correlationDecayParameter /* Correlation */,
+				Dynamics.LOGNORMAL,
 				Measure.SPOT,
 				a,b,c,d
 				);
 
-		final CalibrationWithSwaptions calibration = new CalibrationWithSwaptions(originalLiborMarketModelSimulation);
+		//We construct the calibration object. We give the correlation decaying parameter: this will not get calibrated 
+		final CalibrationWithSwaptionsEnhanced calibration =
+				new CalibrationWithSwaptionsEnhanced(originalLiborMarketModelSimulation, correlationDecayParameter);
 
-		final int numberOfStrikesForTheCalibration = 15;
+		final int numberOfStrikesForTheCalibration = 10;
 
 		//creation of the items: products + target prices given by these products
 		calibration.createCalibrationItems(numberOfStrikesForTheCalibration);
@@ -90,9 +95,10 @@ public class CalibrationTest {
 		final double[] parameters = ((AbstractLIBORCovarianceModelParametric)
 				liborMarketModelCalibrated.getCovarianceModel()).getParameterAsDouble();
 		/*
-		 * getter in the abstractParametric class (downcasting, implemented in the five parameters
-		 * covariance model
+		 * getter in the AbstractLIBORCovarianceModelParametric class (downcasting),
+		 * implemented in the specific covariance model
 		 */
+		
 		System.out.println("Rebonato volatility:");
 		System.out.println("a = " + formatterRealWithTwoDecimalDigits.format(parameters[0]));
 		System.out.println("b = " + formatterRealWithTwoDecimalDigits.format(parameters[1]));
@@ -101,8 +107,7 @@ public class CalibrationTest {
 
 		System.out.println();
 
-		System.out.println("Covariance structure: correlation decay parameter = " +
-				formatterRealWithTwoDecimalDigits.format(parameters[4]));
+		//System.out.println("Covariance structure: decay parameter = " + formatterRealWithTwoDecimalDigits.format(parameters[4]));
 		System.out.println();
 		
 		/*
@@ -127,19 +132,37 @@ public class CalibrationTest {
 		//we need them to produce the prices for these products, given now by the calibrated model
 		final CalibrationProduct[] calibrationProducts = calibration.getCalibrationProducts();
 
+		//we also want to print the corresponding strikes, fixings and swaptions tenure structures
+		final ArrayList<Double> strikesForSwaptions = calibration.getStrikes();
+		final ArrayList<Double> fixingsForSwaptions = calibration.getFixings();
+		final ArrayList<ArrayList<Double>> tenureStructuresForSwaptions = calibration.getTenureStructures();
+
+		
+		
 		//it will be given by calibrationProduct.getProduct()
 		AbstractTermStructureMonteCarloProduct derivative;
 
-		System.out.println(" Model" + "\t" + "            Target" + "\t" + "  Percentage Error");
+		System.out.println(" Fixing" + "\t" + "       Tenure structure begin-end" + "\t" + "     Strike"  + "\t" + "        Model price"
+		+  "\t" + "      Target price" +  "\t" + "       Percentage Error");
 
 		System.out.println();
 		
-		double errorsSum = 0.0;
+		int strikeAndSwaptionIndex = 0;
+		
+		double sumError= 0.0;
 		for (final CalibrationProduct calibrationProduct : calibrationProducts) {
 
 			// getter of the i-th calibration product: a Swaption object with a specific strike
 			derivative = calibrationProduct.getProduct();
-			/*
+			
+			final double strikeForSwaption = strikesForSwaptions.get(strikeAndSwaptionIndex);
+			final double fixingForSwaption = fixingsForSwaptions.get(strikeAndSwaptionIndex);
+			
+			final ArrayList<Double> currentTenureStructure = tenureStructuresForSwaptions.get(strikeAndSwaptionIndex);
+			final double firstTimeTenureStructure = currentTenureStructure.get(0);
+			final double lastTimeTenureStructure = currentTenureStructure.get(currentTenureStructure.size()-1);
+				
+			/* 
 			 * usual getValue method of an object of type AbstractLIBORMonteCarloProduct: it
 			 * gives the Black volatility of the Swaption for the calibrated parameters
 			 */
@@ -148,12 +171,18 @@ public class CalibrationTest {
 			final double valueTarget = derivative.getValue(originalLiborMarketModelSimulation);
 			// calibration error
 			final double diff = Math.abs(valueModel - valueTarget)/valueTarget;
-			System.out.println(formatterRealWithFourDecimalDigits.format(valueModel) + "\t \t   " +
-					formatterRealWithFourDecimalDigits.format(valueTarget) + "\t "
+			sumError += diff;
+			System.out.println(" " + formatterRealWithTwoDecimalDigits.format(fixingForSwaption) + "\t \t" +
+					formatterRealWithTwoDecimalDigits.format(firstTimeTenureStructure) + "-" + 
+					formatterRealWithTwoDecimalDigits.format(lastTimeTenureStructure) + "\t \t \t    " +
+					formatterRealWithFourDecimalDigits.format(strikeForSwaption) + "\t \t" +
+					formatterRealWithFourDecimalDigits.format(valueModel) + "\t \t     " +
+					formatterRealWithFourDecimalDigits.format(valueTarget) + "\t \t \t"
 					+ formatterRealPercentage.format(diff));
-			errorsSum += diff;
+			strikeAndSwaptionIndex ++;
 		}
-		double averageError = errorsSum / calibrationProducts.length;
+		
+		double averageError = sumError / strikesForSwaptions.size();
 		
 		System.out.println();
 		System.out.println("Average percentage error: " + formatterRealPercentage.format(averageError));

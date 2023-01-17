@@ -113,7 +113,6 @@ public class CalibrationWithSwaptions {
 			 * case, we produce it by Monte-Carlo
 			 */
 			final double targetValueSwaption = monteCarloSwaption.getValue(trueLiborMarket)*(1 + noise);
-
 			/*
 			 * Look at this constructor of CalibrationProduct, where the important inputs
 			 * for now are the first two: the product we are considering (so type of
@@ -121,7 +120,6 @@ public class CalibrationWithSwaptions {
 			 * product. The calibration will be made with the scope to match these values as
 			 * much as possible.
 			 */
-
 			calibrationProducts[strikeIndex] =
 					new CalibrationProduct(monteCarloSwaption,
 							targetValueSwaption,
@@ -163,9 +161,7 @@ public class CalibrationWithSwaptions {
 		final DiscountCurve discountCurve = trueLiborMarketModel.getDiscountCurve();
 
 		final RandomVariableFactory randomVariableFactory = new RandomVariableFromArrayFactory();
-
-	
-		
+			
 		// Calibrated LIBOR Market Model: same as the "true" one but with calibrated parameters
 		final LIBORMarketModel liborMarketModelCalibrated = new LIBORMarketModelFromCovarianceModel(
 				liborDiscretization,
