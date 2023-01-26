@@ -255,24 +255,19 @@ public class CalibrationWithSwaptionsEnhanced {
 		 */
 		for (double fixingTimeSwaption : arrayListForFixingTimes) {
 
-			
-			// This is T_i,...,T_n for fixing T_i. At every iteration of this most external for loop, we will delete T_i
-			TimeDiscretization completeSwaptionTenureStructureForGivenFixing =
-					new TimeDiscretizationFromArray(completeSwaptionTenureStructureForGivenFixingAsArrayList);
-			
 			/*
 			 * Now we already work looking at the second loop: we start by T_i,...,T_n, and at every iteration of
 			 * the next for loop we will delete the last element. So first we have T_i,...,T_n, then T_i,...,T_{n-1},
 			 * and so on. See the next loop
 			 */
 			ArrayList<Double> dynamicalSwaptionTenureStructureAsArrayList =	
-					completeSwaptionTenureStructureForGivenFixing.getAsArrayList();	
+					(ArrayList<Double>) completeSwaptionTenureStructureForGivenFixingAsArrayList.clone();	
 			
 			/*
 			 * Second nested loop: we manage the tenure structures. At the end of the for loop we delete the last entry
 			 * of dynamicalSwaptionTenureStructureAsArrayList 
 			 */
-			for (int indexForEndOfSwaptionTenureStructure = completeSwaptionTenureStructureForGivenFixing.getNumberOfTimes() - 1;
+			for (int indexForEndOfSwaptionTenureStructure = completeSwaptionTenureStructureForGivenFixingAsArrayList.size()-1;
 					indexForEndOfSwaptionTenureStructure >= 1; indexForEndOfSwaptionTenureStructure--) {
 
 				//we create a TimeDiscretization object representing our swaption tenure structures
