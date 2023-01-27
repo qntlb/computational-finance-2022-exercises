@@ -46,8 +46,17 @@ public class FactorReductionExponentialDecay {
 		correlationDecay = Math.max(correlationDecay, 0); // Negative values of correlationDecay do not make sense.
 
 		final double[][] correlationMatrix = new double[numberOfTimeSteps][numberOfTimeSteps];
-		// Construct correlationMatrix
-		
+		// Construction of the n factors correlation matrix: we use a double for loop
+		for(int row=0; row<numberOfTimeSteps; row++) {
+			for(int col=0; col<row; col++) {
+				// Exponentially decreasing instantaneous correlation
+				correlationMatrix[row][col] = Math.exp(
+						-correlationDecay * (liborPeriodDiscretization.getTime(row)
+								- liborPeriodDiscretization.getTime(col)));
+				correlationMatrix[col][row] = correlationMatrix[row][col];
+			}
+			correlationMatrix[row][row] = 1;
+		}
 		return correlationMatrix;
 	}
 
@@ -77,7 +86,21 @@ public class FactorReductionExponentialDecay {
 
 		final double[][] reducedCorrelationMatrix = new double[numberOfTimeSteps][numberOfTimeSteps];
 
-		// construct reducedCorrelationMatrix
+		// factor decomposition (and reduction if numberOfFactors < correlationMatrix.columns()): we get F^r
+		final double[][] factorMatrix = getPossiblyReducedFactorMatrix(correlationDecay, numberOfFactors);
+
+		//we construct here the new correlation matrix basing on the factor matrix. We use again a double for loop
+		for(int component1=0; component1<numberOfTimeSteps; component1++) {
+			for(int component2=0; component2<component1; component2++) {
+				double correlation = 0.0;
+				for(int factor=0; factor<numberOfFactors; factor++) {
+					correlation += factorMatrix[component1][factor] * factorMatrix[component2][factor];
+				}
+				reducedCorrelationMatrix[component1][component2] = correlation;
+				reducedCorrelationMatrix[component2][component1] = correlation;
+			}
+			reducedCorrelationMatrix[component1][component1] = 1.0;
+		}
 		return reducedCorrelationMatrix;
 	}
 
@@ -95,7 +118,7 @@ public class FactorReductionExponentialDecay {
 		final double[][] originalCorrelationMatrix = getOriginalCorrelationMatrix(correlationDecay);
 		final double[][] reducedCorrelationMatrix = getPossiblyReducedCorrelationMatrix(correlationDecay, numberOfFactors);
 		double diffCorrelation = 0.0;
-		for(int component1=0; component1<numberOfTimeSteps; component1++) {
+		for(int component1=1; component1<numberOfTimeSteps; component1++) {
 			for(int component2=0; component2<component1; component2++) {
 				diffCorrelation +=
 						originalCorrelationMatrix[component1][component2]
