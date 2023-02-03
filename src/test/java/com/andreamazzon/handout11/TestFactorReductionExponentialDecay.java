@@ -36,7 +36,7 @@ public class TestFactorReductionExponentialDecay {
 		double averageError;
 
 		System.out.println("Correlation decay parameter" + "\t" + "Average relative difference between the entries of the matrices");
-		for (double corrDecay = 0; corrDecay <= 4; corrDecay += 0.1) {
+		for (double corrDecay = 0; corrDecay <= 40; corrDecay += 1) {
 			averageError= factorReduction.getErrorFromFactorReduction(corrDecay, numberOfFactors);
 			System.out.println(formatterRealWithOneDigitAfterComma.format(corrDecay) + "                             "
 			+ formatterRealWithFourDigitsAfterComma.format(averageError));

@@ -44,7 +44,7 @@ public class LMMDigitalCapletTest {
 		final double liborPeriodLength = 0.5;// for the TENURE STRUCTURE discretization
 		final double liborRateTimeHorizon = 10;
 
-		final int numberOfFactors = 20; 
+		final int numberOfFactors = 2; 
 		
 		final double correlationDecayParam = 1;// alpha such that rho_{i,j}=\exp(-alpha|T_i-T_j|)
 		final double a = 0.2, b = 0.1, c = 0.15, d = 0.3; // volatility structure
